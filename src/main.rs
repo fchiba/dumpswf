@@ -159,6 +159,7 @@ fn print_action(actions: &Vec<ActionWithSize>, constant_pool: Vec<String>, level
                     preloads.push("global");
                 }
                 println!("{}      preloads={:?}", indent, preloads);
+                println!("{}      registers={:?}", indent, function.num_registers);
                 print_action(&function.actions, constant_pool.clone(), level + 4);
             }
             _ => {
