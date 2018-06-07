@@ -3,7 +3,7 @@ extern crate swf;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
-use std::io::{self, BufReader};
+use std::io::BufReader;
 use swf::avm1::types::*;
 use swf::Tag::*;
 use swf::*;
@@ -84,6 +84,7 @@ fn print_action(actions: &Vec<ActionWithSize>, constant_pool: Vec<String>, level
         match &action.action {
             ConstantPool(pool) => {
                 constant_pool = pool.clone();
+                println!("{}{}: ConstantPool", indent, idx);
             }
             Push(values) => {
                 let values: Vec<_> = values
@@ -121,10 +122,43 @@ fn print_action(actions: &Vec<ActionWithSize>, constant_pool: Vec<String>, level
                 print_action(actions, constant_pool.clone(), level + 4);
             }
             DefineFunction2(function) => {
-                println!(
-                    "{}{}: DefineFunction2 name={} params={:?}",
-                    indent, idx, function.name, function.params
-                );
+                println!("{}{}: DefineFunction2", indent, idx);
+                println!("{}      name={}", indent, function.name);
+                let params: Vec<_> = function
+                    .params
+                    .iter()
+                    .map(|param| {
+                        format!(
+                            "{}({})",
+                            param.name,
+                            param
+                                .register_index
+                                .map(|i| i.to_string())
+                                .unwrap_or("-".to_string())
+                        )
+                    })
+                    .collect();
+                println!("{}      params={:?}", indent, params);
+                let mut preloads = Vec::new();
+                if function.preload_parent {
+                    preloads.push("parent");
+                }
+                if function.preload_root {
+                    preloads.push("root");
+                }
+                if function.preload_super {
+                    preloads.push("super");
+                }
+                if function.preload_arguments {
+                    preloads.push("arguments");
+                }
+                if function.preload_this {
+                    preloads.push("this");
+                }
+                if function.preload_global {
+                    preloads.push("global");
+                }
+                println!("{}      preloads={:?}", indent, preloads);
                 print_action(&function.actions, constant_pool.clone(), level + 4);
             }
             _ => {
